@@ -60,7 +60,7 @@ const cssGeneratorOptions: Partial<CssGeneratorOptions> = {
 const Doc = forwardRef<any, { settings: StyleGuideSettings }>(({ settings }, ref) => {
 	const getVariablesObject = useAtomCallback(useCallback((get) => get(variablesStylesAtom), []));
 
-	const { root_font_size, is_rem, max_screen_width, min_screen_width } =
+	const { root_font_size, is_rem, max_screen_width, min_screen_width, theme_mode } =
 		useAtomValue(presetPreferencesSelector);
 	const currentPreset = useAtomValue(currentPresetAtom);
 	const colorSystem = useAtomValue(colorSystemFormDataAtom);
@@ -103,7 +103,10 @@ const Doc = forwardRef<any, { settings: StyleGuideSettings }>(({ settings }, ref
 		const modulesVariables = getVariablesObject();
 		const variablesFromGroups = getCssVarsObjects();
 		const cssObjects = [...modulesVariables, ...variablesFromGroups];
-		const css = await cssGenerator({ cssObjects, options: cssGeneratorOptions });
+		const css = await cssGenerator({
+			cssObjects,
+			options: { ...cssGeneratorOptions, themeMode: theme_mode ?? "light" },
+		});
 
 		setVariablesCss(css);
 
@@ -119,6 +122,7 @@ const Doc = forwardRef<any, { settings: StyleGuideSettings }>(({ settings }, ref
 		JSON.stringify(spacingData),
 		JSON.stringify(typographyData),
 		JSON.stringify(componentsData),
+		theme_mode,
 	]);
 
 	useEffect(() => {

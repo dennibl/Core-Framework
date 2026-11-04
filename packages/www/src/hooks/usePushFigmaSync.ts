@@ -366,11 +366,12 @@ export function usePushFigmaSync() {
 			return;
 		}
 
-		const { postcss, root_font_size, is_rem } = await getPresetPreferences();
+		const { postcss, root_font_size, is_rem, theme_mode } = await getPresetPreferences();
 
 		const vars = await generateColorSystemVariables({
 			colorSystemState,
 			manual_theme: true,
+			themeMode: theme_mode ?? "light",
 		});
 
 		const cssString = await cssGenerator({
@@ -381,6 +382,7 @@ export function usePushFigmaSync() {
 				propertyValidation: false,
 				valueValidation: false,
 				manualDarkMode: checkIfHasDarkMode(colorSystemState),
+				themeMode: theme_mode ?? "light",
 				minScreenWidth,
 				maxScreenWidth,
 				variablePrefix,

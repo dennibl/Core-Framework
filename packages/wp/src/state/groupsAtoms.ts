@@ -67,6 +67,7 @@ export const joinedStylesAtom = atom<CssObject[]>((get) => {
 		max_screen_width,
 		is_rem,
 		is_add_group_comments,
+		theme_mode,
 		is_clickable_parent,
 		enable_sr_only,
 	} = get(presetPreferencesSelector);
@@ -92,6 +93,7 @@ export const joinedStylesAtom = atom<CssObject[]>((get) => {
 	const colorSystemObjects = generateColorSystemObjects({
 		formData: get(colorSystemFormDataAtom),
 		manualTheme: true,
+		themeMode: theme_mode ?? "light",
 		classPrefix,
 		isAddGroupComments: is_add_group_comments,
 	});
@@ -161,6 +163,7 @@ export const getSortedStylesAtom = atom<CssObject[]>((get) => {
 		max_screen_width,
 		is_rem,
 		is_add_group_comments,
+		theme_mode,
 		is_clickable_parent,
 		enable_sr_only,
 	} = get(presetPreferencesSelector);
@@ -186,6 +189,7 @@ export const getSortedStylesAtom = atom<CssObject[]>((get) => {
 	const colorSystemObjects = generateColorSystemObjects({
 		formData: get(colorSystemFormDataAtom),
 		manualTheme: true,
+		themeMode: theme_mode ?? "light",
 		classPrefix,
 		isAddGroupComments: is_add_group_comments,
 	});

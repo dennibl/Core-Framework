@@ -105,6 +105,7 @@ export function usePush() {
 			postcss_hover_media,
 			root_font_size,
 			is_rem,
+			theme_mode,
 		} = await getPreferences();
 		const hasDarkMode = getColorSystemFormDataAtom().groups.some(({ colors }) =>
 			colors.some(({ isDarkMode }) => isDarkMode),
@@ -120,6 +121,7 @@ export function usePush() {
 				minScreenWidth: min_screen_width,
 				maxScreenWidth: max_screen_width,
 				manualDarkMode: hasDarkMode,
+				themeMode: theme_mode ?? "light",
 				variablePrefix,
 				classPrefix,
 				postcss,

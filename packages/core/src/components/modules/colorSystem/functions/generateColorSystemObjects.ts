@@ -77,6 +77,7 @@ interface IGenerateColorSystemObjects {
 	readonly lightModeSelector?: string;
 	readonly classPrefix?: string;
 	readonly manualTheme?: boolean;
+	readonly themeMode?: "light" | "dark" | "auto";
 	readonly onlyVariables?: boolean;
 	readonly isAddGroupComments?: boolean;
 	readonly includeVariants?: boolean;
@@ -89,6 +90,7 @@ export function generateColorSystemObjects({
 	classPrefix,
 	onlyVariables = false,
 	manualTheme = true,
+	themeMode,
 	isAddGroupComments,
 	includeVariants,
 }: IGenerateColorSystemObjects) {
@@ -97,6 +99,7 @@ export function generateColorSystemObjects({
 	const colorSystemVariables = generateColorSystemVariables({
 		colorSystemState: formData,
 		manual_theme: manualTheme,
+		themeMode,
 		darkModeSelector,
 		lightModeSelector,
 		classPrefix,

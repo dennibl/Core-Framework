@@ -3,10 +3,11 @@ import { useGetColor } from "hooks/useGetColor";
 import { convertToDesiredColorFormat } from "utils";
 import { updateColorVariation, updateColorVariations } from "../functions/updateColorVariations";
 import { generateWithCheck } from "../functions/generateShadesTints";
-import { ClassGeneratorValue, ColorItem, DEFAULT_OPACITY_VARIANTS } from "../index";
+import { ClassGeneratorValue, ColorItem } from "../index";
 import { colord } from "colord";
 import { ColorAdditionalVariations, VariantValues } from "./ColorAdditionalVariations";
 import { ColorFeatureToggle } from "./ColorFeatureToggle";
+import { ColorTransparencyVariations } from "./ColorTransparencyVariations";
 import { ColorUtilityClasses } from "./ColorUtilityClasses";
 
 interface ColorBodyValues {
@@ -58,17 +59,6 @@ export const ColorBodyValues = memo<ColorBodyValues>(({ color, onUpdateItem }) =
 		[color, onUpdateItem, getColor],
 	);
 
-	const handleTransparentVarsToggle = useCallback(
-		(checked: boolean) => {
-			onUpdateItem({
-				...color,
-				transparent: checked,
-				transparentVariables: checked ? DEFAULT_OPACITY_VARIANTS : [],
-			});
-		},
-		[color, onUpdateItem],
-	);
-
 	const handleColorVariationChange = useCallback(
 		(type: "shade" | "tint", value: VariantValues) => {
 			onUpdateItem(updateColorVariations(color, type, value.isActive, value.number, colorVariables, prevFormat));
@@ -97,14 +87,7 @@ export const ColorBodyValues = memo<ColorBodyValues>(({ color, onUpdateItem }) =
 			/>
 
 			<hr />
-			<ColorFeatureToggle
-				color={color}
-				featureLabel="Generate transparent variants"
-				tooltipLabel={`Generate 10 transparent variants. Eg. --${color.name}-5, --${color.name}-10, --${color.name}-20, etc.`}
-				featureStateKey="transparent"
-				onToggleFeature={handleTransparentVarsToggle}
-				className="transparent-vars-row"
-			/>
+			<ColorTransparencyVariations color={color} onUpdateItem={onUpdateItem} />
 
 			<hr />
 			<ColorAdditionalVariations

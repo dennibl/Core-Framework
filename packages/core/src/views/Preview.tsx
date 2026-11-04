@@ -53,6 +53,7 @@ export function Preview() {
 			postcss_hover_media,
 			root_font_size,
 			is_rem,
+			theme_mode,
 		} = await getPreferences();
 
 		const currentPreset = await getCurrentPreset();
@@ -75,6 +76,7 @@ export function Preview() {
 				minScreenWidth: max_screen_width,
 				maxScreenWidth: min_screen_width,
 				manualDarkMode: hasDarkMode,
+				themeMode: theme_mode ?? "light",
 				postcss,
 				postcssEasingGradients: postcss_easing_gradients,
 				postcssHoverMedia: postcss_hover_media,

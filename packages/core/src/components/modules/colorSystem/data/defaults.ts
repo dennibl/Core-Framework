@@ -14,6 +14,22 @@ export const DEFAULT_SHADES_COUNT = 8;
 
 export const DEFAULT_TINTS_COUNT = 8;
 
+export const MIN_COLOR_VARIATION_COUNT = 1;
+
+export const MAX_COLOR_VARIATION_COUNT = 10;
+
+export const MIN_OPACITY_VARIANT = 1;
+
+export const MAX_OPACITY_VARIANT = 99;
+
+export const MIN_OPACITY_VARIANTS_COUNT = 1;
+
+export const MAX_OPACITY_VARIANTS_COUNT = 20;
+
+export const OPACITY_VARIANTS_PER_ROW = 10;
+
+export const DEFAULT_OPACITY_VARIANTS = [9, 18, 27, 36, 45, 55, 64, 73, 82, 91];
+
 const DEFAULT_COLOR_NAME = "default";
 
 export const DEFAULT_COLOR_ITEM: Omit<ColorItem, "id"> = {
@@ -33,7 +49,7 @@ export const COLOR_SYSTEM_INITIAL_STATE: ColorSystemFormData = {
 					value: "hsla(238, 100%, 62%, 1)",
 					format: "hsla",
 					transparent: true,
-					transparentVariables: [5, 10, 20, 30, 40, 50, 60, 70, 80, 90],
+					transparentVariables: [...DEFAULT_OPACITY_VARIANTS],
 					isShades: true,
 					shades: [
 						{
@@ -82,7 +98,7 @@ export const COLOR_SYSTEM_INITIAL_STATE: ColorSystemFormData = {
 					value: "hsla(0, 94%, 68%, 1)",
 					format: "hsla",
 					transparent: true,
-					transparentVariables: [5, 10, 20, 30, 40, 50, 60, 70, 80, 90],
+					transparentVariables: [...DEFAULT_OPACITY_VARIANTS],
 					isShades: true,
 					shades: [
 						{
@@ -131,7 +147,7 @@ export const COLOR_SYSTEM_INITIAL_STATE: ColorSystemFormData = {
 					value: "hsla(198, 74%, 51%, 1)",
 					format: "hsla",
 					transparent: true,
-					transparentVariables: [5, 10, 20, 30, 40, 50, 60, 70, 80, 90],
+					transparentVariables: [...DEFAULT_OPACITY_VARIANTS],
 					isShades: true,
 					shades: [
 						{
@@ -283,7 +299,7 @@ export const COLOR_SYSTEM_INITIAL_STATE: ColorSystemFormData = {
 					darkValue: "hsla(0, 0%, 0%, 1)",
 					format: "hsla",
 					transparent: true,
-					transparentVariables: [5, 10, 20, 30, 40, 50, 60, 70, 80, 90],
+					transparentVariables: [...DEFAULT_OPACITY_VARIANTS],
 					isShades: false,
 					shades: [],
 					darkShades: [],
@@ -300,7 +316,7 @@ export const COLOR_SYSTEM_INITIAL_STATE: ColorSystemFormData = {
 					darkValue: "hsla(0, 0%, 100%, 1)",
 					format: "hsla",
 					transparent: true,
-					transparentVariables: [5, 10, 20, 30, 40, 50, 60, 70, 80, 90],
+					transparentVariables: [...DEFAULT_OPACITY_VARIANTS],
 					isShades: false,
 					shades: [],
 					darkShades: [],
@@ -323,7 +339,7 @@ export const COLOR_SYSTEM_INITIAL_STATE: ColorSystemFormData = {
 					value: "hsla(136, 95%, 56%, 1)",
 					format: "hsla",
 					transparent: true,
-					transparentVariables: [5, 10, 20, 30, 40, 50, 60, 70, 80, 90],
+					transparentVariables: [...DEFAULT_OPACITY_VARIANTS],
 					isShades: false,
 					gen: ["text", "bg", "border"],
 				},
@@ -333,7 +349,7 @@ export const COLOR_SYSTEM_INITIAL_STATE: ColorSystemFormData = {
 					value: "hsla(351, 95%, 56%, 1)",
 					format: "hsla",
 					transparent: true,
-					transparentVariables: [5, 10, 20, 30, 40, 50, 60, 70, 80, 90],
+					transparentVariables: [...DEFAULT_OPACITY_VARIANTS],
 					isShades: false,
 					gen: ["text", "bg", "border"],
 				},
@@ -342,5 +358,3 @@ export const COLOR_SYSTEM_INITIAL_STATE: ColorSystemFormData = {
 		},
 	],
 };
-
-export const DEFAULT_OPACITY_VARIANTS = [5, 10, 20, 30, 40, 50, 60, 70, 80, 90];

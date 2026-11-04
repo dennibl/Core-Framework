@@ -17,10 +17,11 @@ interface ColorVariationPreview {
 	defaultValue: string;
 	onChangeEnd: (color: string) => void;
 	onReset?: () => void;
+	isEditable?: boolean;
 }
 
 export const ColorVariationPreview = memo<ColorVariationPreview>(
-	({ color, format, colorName, defaultValue, onChangeEnd, onReset }) => {
+	({ color, format, colorName, defaultValue, onChangeEnd, onReset, isEditable = true }) => {
 		const { parseColorValue, colorChannels } = useGetColor();
 
 		const [colorValue, setColorValue] = useState(color);
@@ -70,7 +71,7 @@ export const ColorVariationPreview = memo<ColorVariationPreview>(
 			<div className="color-preview" style={{ backgroundColor: colorValue }}>
 				<div className="top-overlay" style={{ opacity: isEditPopoverOpen ? 1 : undefined }}>
 					<Popover onOpenChange={setIsEditPopoverOpen} open={isEditPopoverOpen} placement="bottom" modal>
-						{flags.editShadeAndTint && (
+						{flags.editShadeAndTint && isEditable && (
 							<PopoverTrigger
 								onClick={() => setIsEditPopoverOpen(!isEditPopoverOpen)}
 								className="copy-color"

@@ -1,9 +1,12 @@
 import { colord } from "colord";
 import { ColorItem, ColorSystemFormData, ColorVariable } from "../../types";
 import { colorGroupsToVariables } from "../colorGroupsToVariables";
+import { generateColorSystemObjects } from "../generateColorSystemObjects";
 import { generateColorSystemVariables, getTransparentVariable } from "../generateColorSystemVariables";
+import { generateShades, generateTints } from "../generateShadesTints";
 import { getColor } from "../getColor";
 import { getColorOnIndex } from "../getColorOnIndex";
+import { generateOpacityVariants } from "../opacityVariants";
 import { refreshColorReferences } from "../refreshColorReferences";
 import { singleColorReducer } from "../singleColorReducer";
 import { updateColorVariation, updateColorVariations } from "../updateColorVariations";
@@ -91,7 +94,7 @@ test.each(["var(--missing)", "var(--light)", "var(--loop)"])(
 );
 
 test.each(["shade", "tint"] as const)(
-	"%s count follows 4 → 7 → 3 for references and literal formats",
+	"%s count follows 4 → 7 → 1 for references and literal formats",
 	(type) => {
 		for (const input of [
 			light,
@@ -100,7 +103,7 @@ test.each(["shade", "tint"] as const)(
 			{ ...light, value: "#ee727f" },
 		] as ColorItem[]) {
 			let color = input;
-			for (const count of [4, 7, 3]) {
+			for (const count of [4, 7, 1]) {
 				color = updateColorVariations(color, type, true, count, variables(body));
 				const items = type === "shade" ? color.shades! : color.tints!;
 				expect(type === "shade" ? color.shadesNumber : color.tintsNumber).toBe(count);
@@ -113,6 +116,47 @@ test.each(["shade", "tint"] as const)(
 		}
 	},
 );
+
+test.each(["shade", "tint"] as const)("%s count is constrained to 1 through 10", (type) => {
+	const belowMinimum = updateColorVariations(light, type, true, 0, variables(body));
+	const aboveMaximum = updateColorVariations(light, type, true, 11, variables(body));
+	const invalid = updateColorVariations(light, type, true, Number.NaN, variables(body));
+
+	expect(type === "shade" ? belowMinimum.shadesNumber : belowMinimum.tintsNumber).toBe(1);
+	expect(type === "shade" ? belowMinimum.shades : belowMinimum.tints).toHaveLength(1);
+	expect(type === "shade" ? aboveMaximum.shadesNumber : aboveMaximum.tintsNumber).toBe(10);
+	expect(type === "shade" ? aboveMaximum.shades : aboveMaximum.tints).toHaveLength(10);
+	expect(type === "shade" ? invalid.shadesNumber : invalid.tintsNumber).toBe(1);
+});
+
+test("the direct shade and tint generators also fall back to one variation", () => {
+	const options = { midColor: pink, name: "brand", number: 0 };
+
+	expect(generateShades(options)).toHaveLength(1);
+	expect(generateTints(options)).toHaveLength(1);
+});
+
+test("generates only the evenly distributed transparent variables", () => {
+	const transparentVariables = generateOpacityVariants(3);
+	const css = declarations(form(body, { ...light, transparentVariables }));
+
+	expect(css["--light-25"]).toBe("#ee727f40");
+	expect(css["--light-50"]).toBe("#ee727f80");
+	expect(css["--light-75"]).toBe("#ee727fbf");
+	expect(css["--light-5"]).toBeUndefined();
+	expect(css["--light-80"]).toBeUndefined();
+});
+
+test("generates utility classes only for the evenly distributed transparent variables", () => {
+	const cssObjects = generateColorSystemObjects({
+		formData: form({ ...light, gen: ["bg"], transparentVariables: generateOpacityVariants(3) }),
+	});
+	const selectors = cssObjects.map(({ selector }) => selector);
+
+	expect(selectors).toEqual(expect.arrayContaining([".bg-light-25", ".bg-light-50", ".bg-light-75"]));
+	expect(selectors).not.toContain(".bg-light-5");
+	expect(selectors).not.toContain(".bg-light-80");
+});
 
 test("changing the shade count leaves the tint count and custom tint untouched", () => {
 	let color = updateColorVariations(light, "tint", true, 4, variables(body));

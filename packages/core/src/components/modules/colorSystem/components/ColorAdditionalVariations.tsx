@@ -4,7 +4,14 @@ import { NumberInput } from "components/basic/NumberInput";
 import { Tooltip } from "components/ui/Tooltip";
 import { useGetColor } from "hooks/useGetColor";
 import { getColorOnIndex } from "../functions/getColorOnIndex";
-import { ColorFormatValue, ColorItem, DEFAULT_SHADES_COUNT, DEFAULT_TINTS_COUNT, Shade } from "../index";
+import {
+	ColorFormatValue,
+	ColorItem,
+	DEFAULT_SHADES_COUNT,
+	DEFAULT_TINTS_COUNT,
+	MAX_COLOR_VARIATION_COUNT,
+	MIN_COLOR_VARIATION_COUNT,
+} from "../index";
 import { Collapse, Switch } from "@mantine/core";
 import { clsx } from "clsx";
 import { ColorVariationPreview } from "./ColorVariationPreview";
@@ -90,8 +97,8 @@ export const ColorAdditionalVariations = memo<ColorAdditionalVariations>(
 								value={variation.number}
 								unit="count"
 								size={10}
-								max={10}
-								min={3}
+								max={MAX_COLOR_VARIATION_COUNT}
+								min={MIN_COLOR_VARIATION_COUNT}
 								step={1}
 								onlyInteger
 								allowMouseWheel

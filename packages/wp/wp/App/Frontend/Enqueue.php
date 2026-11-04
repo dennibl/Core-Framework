@@ -297,7 +297,7 @@ class Enqueue extends Base {
 
 		$js_light = '(()=>{const e=localStorage.getItem("cf-theme"),t=document.querySelector("html");["light","dark"].includes(String(e))?t?.classList?.add("dark"===e?"cf-theme-dark":"cf-theme-light"):t?.classList?.add("auto"===e&&window.matchMedia("(prefers-color-scheme: dark)").matches?"cf-theme-dark":"cf-theme-light")})();';
 		$js_dark  = '(()=>{const e=localStorage.getItem("cf-theme"),t=document.querySelector("html");["light","dark"].includes(String(e))?t?.classList?.add("dark"===e?"cf-theme-dark":"cf-theme-light"):t?.classList?.add("auto"===e?window.matchMedia("(prefers-color-scheme: dark)").matches?"cf-theme-dark":"cf-theme-light":"cf-theme-dark")})();';
-		$js_auto  = '(()=>{const e=localStorage.getItem("cf-theme"),t=document.querySelector("html");["light","dark"].includes(String(e))?t?.classList?.add("dark"===e?"cf-theme-dark":"cf-theme-light"):t?.classList?.add(window.matchMedia("(prefers-color-scheme: dark)").matches?"cf-theme-dark":"cf-theme-light")})();';
+		$js_auto  = '(()=>{const e=localStorage.getItem("cf-theme"),t=document.querySelector("html");["light","dark"].includes(String(e))&&t?.classList?.add("dark"===e?"cf-theme-dark":"cf-theme-light")})();';
 
 		$option      = get_option( 'core_framework_main', array() );
 		$mode        = isset( $option['theme_mode'] ) ? $option['theme_mode'] : 'light';

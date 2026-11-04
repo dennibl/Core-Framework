@@ -1,3 +1,4 @@
+import { MAX_COLOR_VARIATION_COUNT, MIN_COLOR_VARIATION_COUNT } from "../data/defaults";
 import { ColorItem, ColorVariable } from "../types";
 import { generateWithCheck } from "./generateShadesTints";
 import { colord } from "colord";
@@ -10,7 +11,13 @@ export function updateColorVariations(
 	colorVariables: ColorVariable[],
 	prevFormat?: string,
 ): ColorItem {
-	number = Math.max(3, Math.min(10, Number.isFinite(number) ? Math.round(number) : 3));
+	number = Math.max(
+		MIN_COLOR_VARIATION_COUNT,
+		Math.min(
+			MAX_COLOR_VARIATION_COUNT,
+			Number.isFinite(number) ? Math.round(number) : MIN_COLOR_VARIATION_COUNT,
+		),
+	);
 	const isShade = type === "shade";
 	const countKey = isShade ? "shadesNumber" : "tintsNumber";
 	const itemsKey = isShade ? "shades" : "tints";

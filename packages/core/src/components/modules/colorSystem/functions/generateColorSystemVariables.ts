@@ -122,6 +122,7 @@ function createDeclarations(
 interface IGenerateColorSystemVariables {
 	readonly colorSystemState: ColorSystemFormData;
 	readonly manual_theme?: boolean;
+	readonly themeMode?: "light" | "dark" | "auto";
 	readonly darkModeSelector?: string;
 	readonly lightModeSelector?: string;
 	readonly classPrefix?: string;
@@ -131,54 +132,109 @@ interface IGenerateColorSystemVariables {
 export function generateColorSystemVariables({
 	colorSystemState,
 	manual_theme,
+	themeMode,
 	darkModeSelector = ".cf-theme-dark",
 	lightModeSelector = ".cf-theme-light",
 	classPrefix = "",
 	includeVariants,
 }: IGenerateColorSystemVariables): CssObject[] {
 	if (colorSystemState.isDisabled) return [];
+	const resolvedThemeMode = themeMode ?? (manual_theme === false ? "auto" : "light");
 
-	const declarations = createDeclarations(colorSystemState.groups, false, includeVariants);
+	const lightModeDeclarations = createDeclarations(colorSystemState.groups, false, includeVariants);
+	const darkModeDeclarations = createDeclarations(colorSystemState.groups, true, includeVariants);
+	const darkDeclarationsByProperty = new Map(
+		darkModeDeclarations.map((declaration) => [declaration.property, declaration]),
+	);
+	const darkModeBaseDeclarations = lightModeDeclarations.map(
+		(declaration) => darkDeclarationsByProperty.get(declaration.property) ?? declaration,
+	);
+	const lightModeProperties = new Set(lightModeDeclarations.map(({ property }) => property));
+	darkModeBaseDeclarations.push(
+		...darkModeDeclarations.filter(({ property }) => !lightModeProperties.has(property)),
+	);
+	const baseDeclarations =
+		resolvedThemeMode === "dark" ? darkModeBaseDeclarations : lightModeDeclarations;
 	const cssObject: CssObject = {
 		id: ulid(),
 		selector: ":root",
-		declarations,
+		declarations: baseDeclarations,
 		...(includeVariants ? { types: ["variable"] } : {}),
 	};
 
-	const darkModeDeclarations = createDeclarations(colorSystemState.groups, true, includeVariants);
+	if (!darkModeDeclarations.length) return [cssObject];
 
-	const darkModeCssObject: CssObject = manual_theme
-		? {
-				id: ulid(),
-				selector: `:root${darkModeSelector}, :root${lightModeSelector} .${classPrefix}theme-inverted, :root${lightModeSelector} .theme-always-dark, :root${darkModeSelector} .${classPrefix}theme-inverted .theme-always-dark`,
-				declarations: darkModeDeclarations,
-				...(includeVariants ? { types: ["variable", "dark-mode"] } : {}),
-		  }
-		: {
-				id: ulid(),
-				selector: ":root",
-				media: "DARK_MODE",
-				declarations: darkModeDeclarations,
-				...(includeVariants ? { types: ["variable", "dark-mode"] } : {}),
-		  };
+	const invertedSelector = `.${classPrefix}theme-inverted`;
+	const alwaysDarkSelector = ".theme-always-dark";
+	const alwaysLightSelector = ".theme-always-light";
+	const darkSelector = `:root${darkModeSelector}, :root${lightModeSelector} ${invertedSelector}, :root${lightModeSelector} ${alwaysDarkSelector}, :root${darkModeSelector} ${invertedSelector} ${alwaysDarkSelector}`;
+	const lightSelector = `:root${lightModeSelector}, :root${darkModeSelector} ${invertedSelector}, :root${darkModeSelector} ${alwaysLightSelector}, :root${lightModeSelector} ${invertedSelector} ${alwaysLightSelector}`;
+	const systemThemeRoot = `:root:not(${lightModeSelector}):not(${darkModeSelector})`;
 
-	const htmlPreferColorSchemaCssObject: CssObject[] = darkModeDeclarations.length
-		? [
-				{
-					id: "prefers-color-scheme-html",
-					selector: `html${manual_theme ? darkModeSelector : ""}`,
-					...(manual_theme ? {} : { media: "DARK_MODE" }),
-					declarations: [
-						{
-							id: "1",
-							property: "color-scheme",
-							value: "dark",
-						},
-					],
-				},
-		  ]
-		: [];
+	const themedObjects: CssObject[] = [];
+	const addThemeObject = (
+		selector: string,
+		declarations: CSSDeclaration[],
+		mode: "light" | "dark",
+		media?: "DARK_MODE",
+	) => {
+		themedObjects.push({
+			id: ulid(),
+			selector,
+			declarations,
+			...(media ? { media } : {}),
+			...(includeVariants
+				? { types: mode === "dark" ? ["variable", "dark-mode"] : ["variable"] }
+				: {}),
+		});
+	};
 
-	return [cssObject, darkModeCssObject, ...htmlPreferColorSchemaCssObject];
+	if (resolvedThemeMode === "light") {
+		addThemeObject(darkSelector, darkModeDeclarations, "dark");
+	} else if (resolvedThemeMode === "dark") {
+		addThemeObject(lightSelector, lightModeDeclarations, "light");
+	} else {
+		addThemeObject(darkSelector, darkModeDeclarations, "dark");
+		addThemeObject(lightSelector, lightModeDeclarations, "light");
+		addThemeObject(
+			`${systemThemeRoot}, ${systemThemeRoot} ${alwaysDarkSelector}, ${systemThemeRoot} ${invertedSelector} ${alwaysDarkSelector}`,
+			darkModeDeclarations,
+			"dark",
+			"DARK_MODE",
+		);
+		addThemeObject(
+			`${systemThemeRoot} ${invertedSelector}, ${systemThemeRoot} ${alwaysLightSelector}, ${systemThemeRoot} ${invertedSelector} ${alwaysLightSelector}`,
+			lightModeDeclarations,
+			"light",
+			"DARK_MODE",
+		);
+	}
+
+	const colorSchemeObject = (
+		selector: string,
+		value: "light" | "dark",
+		media?: "DARK_MODE",
+	): CssObject => ({
+		id: `color-scheme-${value}-${selector}-${media ?? "default"}`,
+		selector,
+		declarations: [{ id: `${value}-color-scheme`, property: "color-scheme", value }],
+		...(media ? { media } : {}),
+	});
+
+	if (resolvedThemeMode === "light") {
+		themedObjects.push(colorSchemeObject("html", "light"));
+		themedObjects.push(colorSchemeObject(`html${darkModeSelector}`, "dark"));
+	} else if (resolvedThemeMode === "dark") {
+		themedObjects.push(colorSchemeObject("html", "dark"));
+		themedObjects.push(colorSchemeObject(`html${lightModeSelector}`, "light"));
+	} else {
+		themedObjects.push(colorSchemeObject("html", "light"));
+		themedObjects.push(colorSchemeObject(`html${darkModeSelector}`, "dark"));
+		themedObjects.push(colorSchemeObject(`html${lightModeSelector}`, "light"));
+		themedObjects.push(
+			colorSchemeObject(`html:not(${lightModeSelector}):not(${darkModeSelector})`, "dark", "DARK_MODE"),
+		);
+	}
+
+	return [cssObject, ...themedObjects];
 }

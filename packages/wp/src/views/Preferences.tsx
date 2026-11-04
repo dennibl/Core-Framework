@@ -113,7 +113,7 @@ export const Preferences = memo(() => {
 
 				<Row
 					label="Default Theme"
-					description="Select the default theme for your project. Use .cf-theme-dark on the <html> element for manual dark mode. Auto will use system preferences."
+						description="Choose the CSS default theme. Auto follows prefers-color-scheme; .cf-theme-light and .cf-theme-dark on <html> always override it."
 					htmlFor="theme_method"
 				>
 					<Select

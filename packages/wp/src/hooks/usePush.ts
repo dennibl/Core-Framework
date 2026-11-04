@@ -427,6 +427,7 @@ export function usePush() {
 				minScreenWidth,
 				maxScreenWidth,
 				manualDarkMode: has_theme,
+				themeMode: theme_mode ?? "light",
 				variablePrefix,
 				classPrefix,
 				postcss,
@@ -519,11 +520,12 @@ export function usePush() {
 			return;
 		}
 
-		const { postcss, root_font_size, is_rem } = await getPresetPreferences();
+		const { postcss, root_font_size, is_rem, theme_mode } = await getPresetPreferences();
 
 		const vars = await generateColorSystemVariables({
 			colorSystemState,
 			manual_theme: true,
+			themeMode: theme_mode ?? "light",
 		});
 
 		const cssString = await cssGenerator({
@@ -534,6 +536,7 @@ export function usePush() {
 				propertyValidation: false,
 				valueValidation: false,
 				manualDarkMode: checkIfHasDarkMode(colorSystemState),
+				themeMode: theme_mode ?? "light",
 				minScreenWidth,
 				maxScreenWidth,
 				variablePrefix,

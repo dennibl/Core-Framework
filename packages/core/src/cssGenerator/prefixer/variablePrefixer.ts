@@ -109,6 +109,8 @@ interface IPrefixRootVariablesAndAddDarkModeSelector {
 	readonly cssObjects: CssObject[];
 	readonly variablePrefix: string;
 	readonly darkModeSelector: string;
+	readonly lightModeSelector: string;
+	readonly themeMode: "light" | "dark" | "auto";
 	readonly manualDarkMode: boolean;
 	readonly classPrefix?: string;
 	readonly alwaysLightSelector?: string;
@@ -118,6 +120,8 @@ export function prefixRootVariablesAndAddDarkModeSelector({
 	cssObjects,
 	variablePrefix,
 	darkModeSelector,
+	lightModeSelector,
+	themeMode,
 	manualDarkMode,
 	classPrefix,
 	alwaysLightSelector,
@@ -146,11 +150,11 @@ export function prefixRootVariablesAndAddDarkModeSelector({
 	const mainRootObjectId = mainRootObject?.id || "";
 
 	if (manualDarkMode) {
-		mainRootObject.selector = `:root, :root${darkModeSelector} .${
-			classPrefix ?? ""
-		}theme-inverted, :root${darkModeSelector} ${alwaysLightSelector ?? ""}, :root.cf-theme-light .${
-			classPrefix ?? ""
-		}theme-inverted ${alwaysLightSelector ?? ""}`;
+		const invertedSelector = `.${classPrefix ?? ""}theme-inverted`;
+		mainRootObject.selector =
+			themeMode === "dark"
+				? `:root, :root${lightModeSelector} ${invertedSelector}, :root${lightModeSelector} .theme-always-dark, :root${darkModeSelector} ${invertedSelector} .theme-always-dark`
+				: `:root, :root${darkModeSelector} ${invertedSelector}, :root${darkModeSelector} ${alwaysLightSelector ?? ""}, :root${lightModeSelector} ${invertedSelector} ${alwaysLightSelector ?? ""}`;
 	}
 
 	if (variablePrefix) {

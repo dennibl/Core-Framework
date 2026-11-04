@@ -155,7 +155,10 @@ export function Components() {
 		const cssObjects = [...modulesVariables, ...variablesFromGroups];
 		const css = await cssGenerator({
 			cssObjects,
-			options: cssGeneratorOptions,
+			options: {
+				...cssGeneratorOptions,
+				themeMode: getPreferences().theme_mode ?? "light",
+			},
 		});
 
 		setVariablesCss(css);

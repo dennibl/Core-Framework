@@ -1,4 +1,4 @@
-import { DEFAULT_SHADES_COUNT } from "../data/defaults";
+import { DEFAULT_SHADES_COUNT, MIN_COLOR_VARIATION_COUNT } from "../data/defaults";
 import { ColorItem, ColorVariable, Shade } from "../types";
 import { getColor } from "./getColor";
 import { ColorFormat } from "@mantine/core/lib/ColorPicker/types";
@@ -32,7 +32,7 @@ function generateShadesOrTints({
 	type,
 }: IGenerateShadesOrTints & { type: ColorType }) {
 	if (!chroma.valid(midColor.trim())) return [];
-	if (number === 0) number = 3;
+	if (!Number.isFinite(number) || number < MIN_COLOR_VARIATION_COUNT) number = MIN_COLOR_VARIATION_COUNT;
 
 	const colorFormat = format ?? getFormat(midColor.trim());
 	const instance = colord(midColor.trim());

@@ -60,7 +60,7 @@ export const getNestedCssObjects = (
 };
 
 export const joinedStylesAtom = atom<CssObject[]>((get) => {
-	const { root_font_size, min_screen_width, max_screen_width, is_rem, is_add_group_comments } =
+	const { root_font_size, min_screen_width, max_screen_width, is_rem, is_add_group_comments, theme_mode } =
 		get(presetPreferencesSelector);
 
 	const screenSizeVariables: CssObject[] = [
@@ -84,6 +84,7 @@ export const joinedStylesAtom = atom<CssObject[]>((get) => {
 	const colorSystemObjects = generateColorSystemObjects({
 		formData: get(colorSystemFormDataAtom),
 		manualTheme: true,
+		themeMode: theme_mode ?? "light",
 		classPrefix,
 		isAddGroupComments: is_add_group_comments,
 	});
@@ -142,7 +143,7 @@ export const joinedStylesAtom = atom<CssObject[]>((get) => {
 });
 
 export const variablesStylesAtom = atom<CssObject[]>((get) => {
-	const { root_font_size, min_screen_width, max_screen_width, is_rem, is_add_group_comments } =
+	const { root_font_size, min_screen_width, max_screen_width, is_rem, is_add_group_comments, theme_mode } =
 		get(presetPreferencesSelector);
 	const currentPreset = get(currentPresetAtom);
 	const classPrefix = currentPreset?.classPrefix;
@@ -150,6 +151,7 @@ export const variablesStylesAtom = atom<CssObject[]>((get) => {
 	const colorSystemObjects = generateColorSystemObjects({
 		formData: get(colorSystemFormDataAtom),
 		manualTheme: true,
+		themeMode: theme_mode ?? "light",
 		onlyVariables: true,
 		classPrefix,
 	});
@@ -205,7 +207,7 @@ export const variablesStylesWithoutColorsAtom = atom<CssObject[]>((get) => {
 });
 
 export const getSortedStylesAtom = atom<CssObject[]>((get) => {
-	const { root_font_size, min_screen_width, max_screen_width, is_rem, is_add_group_comments } =
+	const { root_font_size, min_screen_width, max_screen_width, is_rem, is_add_group_comments, theme_mode } =
 		get(presetPreferencesSelector);
 
 	const screenSizeVariables: CssObject[] = [
@@ -229,6 +231,7 @@ export const getSortedStylesAtom = atom<CssObject[]>((get) => {
 	const colorSystemObjects = generateColorSystemObjects({
 		formData: get(colorSystemFormDataAtom),
 		manualTheme: true,
+		themeMode: theme_mode ?? "light",
 		classPrefix,
 		isAddGroupComments: is_add_group_comments,
 	});
