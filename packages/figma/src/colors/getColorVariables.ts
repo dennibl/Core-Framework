@@ -1,9 +1,11 @@
+import { oklchToRgba, parseOklch } from "../../../core/src/utils/oklch";
 import { ColorVariable, Preset, SimpleVariable } from "../types";
 import { colord } from "colord";
 import { getColor, isValidColorValue } from "./functions/getColor";
 
 export function toRgba(color: string, overrides?: { r?: number; g?: number; b?: number; a?: number }) {
-	const rgba = colord(color).toRgb();
+	const oklch = parseOklch(color);
+	const rgba = oklch ? oklchToRgba(oklch) : colord(color).toRgb();
 
 	rgba.r = overrides?.r ?? rgba.r / 255;
 	rgba.b = overrides?.b ?? rgba.b / 255;

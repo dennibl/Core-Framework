@@ -5,11 +5,7 @@ import { useGetColor } from "../../../hooks/useGetColor";
 import { Autocomplete } from "../../basic/Autocomplete";
 import { ColorFormatValue } from "../colorSystem";
 import { Tooltip } from "@mantine/core";
-import { colord } from "colord";
-import { getDefaultColorInFormat } from "utils";
-import { parseColor } from "@adobe/react-spectrum";
-
-const hexFormats = ["hex", "hexa"];
+import { convertToDesiredColorFormat } from "utils";
 
 interface ColorPickerProps {
 	onChange: (color: string) => void;
@@ -34,24 +30,16 @@ export const ColorPicker = memo<ColorPickerProps>(
 		const [prevFormat, setPrevFormat] = useState(format);
 
 		const isRawFormat = useMemo(() => format === "raw", [format]);
-		const validFormat = useMemo(() => (format === "raw" ? "hex" : format), [format]);
+		const validFormat = useMemo(
+			() => (format === "raw" ? "hex" : format === "oklch" ? "hsl" : format),
+			[format],
+		);
+		const formatOutput = (color: string) =>
+			format === "oklch" ? convertToDesiredColorFormat(color, "oklch") : color;
 
 		const parsedColor = useMemo(() => {
-			try {
-				if (!value) return parseColor(getDefaultColorInFormat(validFormat));
-
-				const color = getColor(value, isDark);
-				const isConversionFromHslToHex = color?.startsWith("hsl") && hexFormats.includes(validFormat);
-				if (isConversionFromHslToHex) {
-					const colorDInstance = colord(color ?? getDefaultColorInFormat(validFormat));
-					return parseColor(colorDInstance.toHex());
-				}
-
-				return parseColor(color ?? getDefaultColorInFormat(validFormat)).toFormat(validFormat);
-			} catch {
-				return parseColor(getDefaultColorInFormat(validFormat)).toFormat(validFormat);
-			}
-		}, [value, validFormat, getColor, isDark]);
+			return parseColorValue(value ?? "", format, isDark);
+		}, [value, format, parseColorValue, isDark]);
 
 		const filteredSuggestions = useMemo(() => {
 			if (!isRawFormat) return [];
@@ -72,9 +60,11 @@ export const ColorPicker = memo<ColorPickerProps>(
 
 		const handleValueChange = (value: string) => {
 			const validColor = !isRawFormat ? getColor(value, isDark) : value;
+			const parsedValue = parseColorValue(getColor(value, isDark), format, isDark);
+			const normalizedValue = formatOutput(parsedValue.toString(validFormat));
 			const isSameColor =
-				validColor.toLowerCase() ===
-				parseColorValue(getColor(value, isDark), validFormat, isDark).toString(validFormat).toLowerCase();
+				convertToDesiredColorFormat(validColor, format === "raw" ? "hex" : format).toLowerCase() ===
+				normalizedValue.toLowerCase();
 
 			onChange(validColor);
 			if (!isSameColor) onBlur?.(validColor);
@@ -84,16 +74,16 @@ export const ColorPicker = memo<ColorPickerProps>(
 
 		const handleValueInputBlur = () => {
 			const color = pasteValue || (value as string);
-			const isSameColor =
-				getColor(color, isDark) ===
-				parseColorValue(loadedColor.current as string, validFormat, isDark).toString(validFormat);
+			const isSameColor = getColor(color, isDark) === getColor(loadedColor.current as string, isDark);
 			const handleChangeOnBlur = !isSameColor && !isRawFormat;
 
 			let validColor: string;
 			try {
 				validColor = !isRawFormat
-					? parseColor(getColor(color as string, isDark)).toString(validFormat) || color
-					: (color as string) ?? previewVariable;
+					? formatOutput(
+							parseColorValue(getColor(color as string, isDark), format, isDark).toString(validFormat),
+						) || color
+					: ((color as string) ?? previewVariable);
 			} catch (e) {
 				validColor = (color as string) ?? previewVariable;
 			}
@@ -116,10 +106,10 @@ export const ColorPicker = memo<ColorPickerProps>(
 
 		useEffect(() => {
 			if (isFormatChanged) {
-				onChange(parsedColor.toString(validFormat));
+				onChange(formatOutput(parsedColor.toString(validFormat)));
 				setIsFormatChanged(false);
 			}
-		}, [isFormatChanged, onChange, parsedColor.toString, validFormat]);
+		}, [isFormatChanged, onChange, parsedColor.toString, validFormat, format]);
 
 		useEffect(() => {
 			if (prevFormat !== format) {

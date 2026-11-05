@@ -1,14 +1,13 @@
 import type { ColorItem, ColorSystemFormData } from "../types";
-import { extend, random } from "colord";
+import { extend } from "colord";
 import harmoniesPlugin from "colord/plugins/harmonies";
+import { convertToDesiredColorFormat } from "utils";
 
 try {
 	extend([harmoniesPlugin]);
 } catch (error) {
 	//
 }
-
-const DEFAULT_COLOR = random();
 
 export const DEFAULT_SHADES_COUNT = 8;
 
@@ -33,12 +32,37 @@ export const DEFAULT_OPACITY_VARIANTS = [9, 18, 27, 36, 45, 55, 64, 73, 82, 91];
 const DEFAULT_COLOR_NAME = "default";
 
 export const DEFAULT_COLOR_ITEM: Omit<ColorItem, "id"> = {
-	value: DEFAULT_COLOR?.toHslString(),
+	value: "oklch(0% 0 0)",
 	name: DEFAULT_COLOR_NAME,
-	format: "hsla",
+	format: "oklch",
 };
 
-export const COLOR_SYSTEM_INITIAL_STATE: ColorSystemFormData = {
+const convertDefaultColorsToOklch = (state: ColorSystemFormData): ColorSystemFormData => ({
+	...state,
+	groups: state.groups.map((group) => ({
+		...group,
+		colors: group.colors.map((color) => {
+			const convertVariants = (variants: typeof color.shades) =>
+				variants?.map((variant) => ({
+					...variant,
+					value: convertToDesiredColorFormat(variant.value, "oklch"),
+				}));
+
+			return {
+				...color,
+				value: convertToDesiredColorFormat(color.value, "oklch"),
+				...(color.darkValue ? { darkValue: convertToDesiredColorFormat(color.darkValue, "oklch") } : {}),
+				format: "oklch",
+				...(color.shades ? { shades: convertVariants(color.shades) } : {}),
+				...(color.darkShades ? { darkShades: convertVariants(color.darkShades) } : {}),
+				...(color.tints ? { tints: convertVariants(color.tints) } : {}),
+				...(color.darkTints ? { darkTints: convertVariants(color.darkTints) } : {}),
+			};
+		}),
+	})),
+});
+
+export const COLOR_SYSTEM_INITIAL_STATE: ColorSystemFormData = convertDefaultColorsToOklch({
 	groups: [
 		{
 			name: "Brand",
@@ -357,4 +381,4 @@ export const COLOR_SYSTEM_INITIAL_STATE: ColorSystemFormData = {
 			id: "01GXK54XWR1373HKFFPZAVJSW5",
 		},
 	],
-};
+});

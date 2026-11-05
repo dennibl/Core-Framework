@@ -1,3 +1,4 @@
+import { formatOklch, oklchToRgba, parseOklch, rgbaToOklch } from "../../core/src/utils/oklch";
 import { Colord, colord } from "colord";
 import { ulid } from "ulid";
 import { CssObject, Declaration } from "./types";
@@ -242,11 +243,10 @@ export function fuzzySearch(needle: string, haystack: string) {
 
 export function convertToDesiredColorFormat(instance: Colord | string, format?: string) {
 	if (typeof instance === "string") {
-		try {
-			instance = new Colord(instance);
-		} catch (error) {
-			return "#000000";
-		}
+		const parsedOklch = parseOklch(instance);
+		if (format === "oklch" && parsedOklch) return formatOklch(parsedOklch);
+		instance = parsedOklch ? colord(oklchToRgba(parsedOklch)) : colord(instance);
+		if (!instance.isValid()) return "#000000";
 	}
 
 	const alpha = instance.alpha();
@@ -273,12 +273,14 @@ export function convertToDesiredColorFormat(instance: Colord | string, format?: 
 		case "hsla":
 			const hsl = instance.toHsl();
 			return `hsla(${hsl.h}, ${hsl.s}%, ${hsl.l}%, ${alpha})`;
+		case "oklch":
+			return formatOklch(rgbaToOklch(instance.toRgb()));
 		default:
 			return instance.toHex();
 	}
 }
 
-export const isValidColor = (value: string) => colord(value).isValid();
+export const isValidColor = (value: string) => parseOklch(value) !== null || colord(value).isValid();
 
 export async function readClipboard() {
 	return await navigator?.clipboard?.readText();

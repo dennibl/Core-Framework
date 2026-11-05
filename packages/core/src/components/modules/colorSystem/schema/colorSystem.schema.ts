@@ -10,6 +10,7 @@ const AVAILABLE_FORMATS = [
 	"xyz",
 	"lab",
 	"lch",
+	"oklch",
 	"cmyk",
 	"hexa",
 	"rgba",

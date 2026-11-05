@@ -1,12 +1,13 @@
 import { memo, useEffect, useMemo, useState } from "react";
-import { useGetColor } from "hooks/useGetColor";
-import { Popover, PopoverContent, PopoverTrigger } from "components/CustomPopover";
-import { Tooltip } from "components/ui/Tooltip";
 import { COLOR_CHANNELS_CONFIG, HSL_FORMATS } from "../constants/formats";
 import { ColorFormatValue } from "../index";
 import { ColorArea, ColorSlider, ColorWheel, Provider, defaultTheme } from "@adobe/react-spectrum";
 import type { Color } from "@adobe/react-spectrum";
 import { clsx } from "clsx";
+import { convertToDesiredColorFormat } from "utils";
+import { Popover, PopoverContent, PopoverTrigger } from "components/CustomPopover";
+import { Tooltip } from "components/ui/Tooltip";
+import { useGetColor } from "hooks/useGetColor";
 
 interface ColorPickerPreview {
 	value: string;
@@ -22,7 +23,10 @@ export const ColorPickerPreview = memo<ColorPickerPreview>(
 		const [open, setOpen] = useState(false);
 		const [colorValue, setColorValue] = useState(value);
 
-		const validFormat = useMemo(() => (format === "raw" ? "hex" : format), [format]);
+		const validFormat = useMemo(
+			() => (format === "raw" ? "hex" : format === "oklch" ? "hsl" : format),
+			[format],
+		);
 
 		const parsedColor = useMemo(
 			() => parseColorValue(open ? colorValue : value, validFormat, isDark),
@@ -32,8 +36,13 @@ export const ColorPickerPreview = memo<ColorPickerPreview>(
 
 		const currentChannels = COLOR_CHANNELS_CONFIG[validFormat] || [];
 
-		const handleChange = (color: string | Color) => setColorValue(color.toString(validFormat));
-		const handleChangeEnd = (color: Color) => onChangeEnd(color.toString(validFormat));
+		const formatOutput = (color: Color) =>
+			format === "oklch"
+				? convertToDesiredColorFormat(color.toString("hsla"), "oklch")
+				: color.toString(validFormat);
+		const handleChange = (color: string | Color) =>
+			setColorValue(typeof color === "string" ? color : formatOutput(color));
+		const handleChangeEnd = (color: Color) => onChangeEnd(formatOutput(color));
 
 		useEffect(() => {
 			if (open) setColorValue(value);

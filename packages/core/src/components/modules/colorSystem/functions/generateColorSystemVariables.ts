@@ -1,7 +1,6 @@
 import { ColorItem, ColorSystemFormData, ColorVariable } from "../types";
-import { colord } from "colord";
 import { ulid } from "ulid";
-import { convertToDesiredColorFormat, convertToVariableDeclarationName } from "utils";
+import { convertToVariableDeclarationName, isValidColor, setColorAlpha } from "utils";
 import { colorGroupsToVariables } from "./colorGroupsToVariables";
 import { getColor, isValidColorValue } from "./getColor";
 
@@ -14,13 +13,12 @@ export function getTransparentVariable(
 	colorVariables: ColorVariable[] = [],
 ) {
 	const { format } = color;
-	const colorValue = getColor(darkMode ? color.darkValue ?? "" : color.value, colorVariables, darkMode);
+	const colorValue = getColor(darkMode ? (color.darkValue ?? "") : color.value, colorVariables, darkMode);
 
-	if (!colord(colorValue).isValid()) return null;
+	if (!isValidColor(colorValue)) return null;
 
 	const name = `${color.name}-${String(variant).replace("0.", "")}`;
-	const instance = colord(colorValue).alpha(Number(variant) / 100);
-	const value = convertToDesiredColorFormat(instance, format);
+	const value = setColorAlpha(colorValue, Number(variant) / 100, format);
 	const id = [color.id, variant].join(".");
 
 	return {
@@ -36,7 +34,7 @@ export function getTransparentVariable(
 					types: darkMode
 						? ["variable", "transparent-class", "dark-mode"]
 						: ["variable", "transparent-class"],
-			  }
+				}
 			: {}),
 	};
 }
@@ -153,8 +151,7 @@ export function generateColorSystemVariables({
 	darkModeBaseDeclarations.push(
 		...darkModeDeclarations.filter(({ property }) => !lightModeProperties.has(property)),
 	);
-	const baseDeclarations =
-		resolvedThemeMode === "dark" ? darkModeBaseDeclarations : lightModeDeclarations;
+	const baseDeclarations = resolvedThemeMode === "dark" ? darkModeBaseDeclarations : lightModeDeclarations;
 	const cssObject: CssObject = {
 		id: ulid(),
 		selector: ":root",
@@ -183,9 +180,7 @@ export function generateColorSystemVariables({
 			selector,
 			declarations,
 			...(media ? { media } : {}),
-			...(includeVariants
-				? { types: mode === "dark" ? ["variable", "dark-mode"] : ["variable"] }
-				: {}),
+			...(includeVariants ? { types: mode === "dark" ? ["variable", "dark-mode"] : ["variable"] } : {}),
 		});
 	};
 
@@ -210,11 +205,7 @@ export function generateColorSystemVariables({
 		);
 	}
 
-	const colorSchemeObject = (
-		selector: string,
-		value: "light" | "dark",
-		media?: "DARK_MODE",
-	): CssObject => ({
+	const colorSchemeObject = (selector: string, value: "light" | "dark", media?: "DARK_MODE"): CssObject => ({
 		id: `color-scheme-${value}-${selector}-${media ?? "default"}`,
 		selector,
 		declarations: [{ id: `${value}-color-scheme`, property: "color-scheme", value }],

@@ -1,12 +1,16 @@
 import { DEFAULT_SHADES_COUNT, MIN_COLOR_VARIATION_COUNT } from "../data/defaults";
-import { ColorItem, ColorVariable, Shade } from "../types";
-import { getColor } from "./getColor";
-import { ColorFormat } from "@mantine/core/lib/ColorPicker/types";
-import chroma from "chroma-js";
-import { colord, getFormat } from "colord";
+import { ColorFormatValue, ColorItem, ColorVariable, Shade } from "../types";
+import { getFormat } from "colord";
 import { extend } from "colord";
 import mixPlugin from "colord/plugins/mix";
-import { convertToDesiredColorFormat } from "utils";
+import {
+	colorsEqual,
+	convertToDesiredColorFormat,
+	isValidColor,
+	parseColorToColord,
+	parseOklch,
+} from "utils";
+import { getColor } from "./getColor";
 
 try {
 	extend([mixPlugin]);
@@ -19,7 +23,7 @@ interface IGenerateShadesOrTints {
 	number?: number;
 	midColor: string;
 	name: string;
-	format?: ColorFormat;
+	format?: ColorFormatValue;
 }
 
 const PERCENTAGE_ERROR = 3;
@@ -31,11 +35,11 @@ function generateShadesOrTints({
 	format,
 	type,
 }: IGenerateShadesOrTints & { type: ColorType }) {
-	if (!chroma.valid(midColor.trim())) return [];
+	if (!isValidColor(midColor.trim())) return [];
 	if (!Number.isFinite(number) || number < MIN_COLOR_VARIATION_COUNT) number = MIN_COLOR_VARIATION_COUNT;
 
-	const colorFormat = format ?? getFormat(midColor.trim());
-	const instance = colord(midColor.trim());
+	const colorFormat = format ?? (parseOklch(midColor.trim()) ? "oklch" : getFormat(midColor.trim()));
+	const instance = parseColorToColord(midColor.trim());
 	const colorsArray = type === "shade" ? instance.shades(number + 2) : instance.tints(number + 2);
 
 	return colorsArray.slice(1, -1).map((color, index) => ({
@@ -116,7 +120,7 @@ export function generateWithCheck(
 			}
 			const totalDiff = calculateTotalDifference(generatedItem.value, existingItem.value);
 			const isCustomRawColor =
-				state.format === "raw" && colord(generatedItem.value).toHex() !== colord(existingItem.value).toHex();
+				state.format === "raw" && !colorsEqual(generatedItem.value, existingItem.value);
 			if (
 				isCustomRawColor ||
 				(state.format !== "raw" && state.prevFormat !== state.format && totalDiff > PERCENTAGE_ERROR)

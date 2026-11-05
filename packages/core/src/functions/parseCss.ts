@@ -1,5 +1,6 @@
 import { getFormat } from "colord";
 import { ulid } from "ulid";
+import { parseOklch } from "utils";
 import type { ColorItem } from "components/modules/colorSystem";
 
 function removeComments(css: string): string {
@@ -22,14 +23,14 @@ function extractVariables(cssObjects: CssObject[]): CssObject[] {
 
 function parseColorItem(property: string, value: string): ColorItem | null {
 	const name = property.trim();
-	const format = getFormat(value);
+	const format = parseOklch(value) ? "oklch" : getFormat(value);
 
 	if (!format) {
 		return null;
 	}
 
 	const colorItem: ColorItem = {
-		format: format as "hex",
+		format: format as ColorItem["format"],
 		id: ulid(),
 		name,
 		value,

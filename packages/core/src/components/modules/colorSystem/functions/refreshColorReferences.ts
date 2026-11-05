@@ -1,9 +1,9 @@
-import { ColorItem, ColorSystemFormData, ColorVariable } from "../types";
 import { DEFAULT_SHADES_COUNT, DEFAULT_TINTS_COUNT } from "../data/defaults";
+import { ColorItem, ColorSystemFormData, ColorVariable } from "../types";
+import { isValidColor } from "utils";
 import { colorGroupsToVariables } from "./colorGroupsToVariables";
-import { getColor } from "./getColor";
 import { generateWithCheck } from "./generateShadesTints";
-import { colord } from "colord";
+import { getColor } from "./getColor";
 
 // Recalculate automatic variants using the previous resolved colour as the
 // baseline, so manually edited swatches survive changes to a referenced colour.
@@ -20,7 +20,7 @@ export function refreshColorReferences(
 		if (!value.trim().startsWith("var(")) continue;
 		const previousValue = getColor(value, previousVariables, isDark);
 		const resolvedValue = getColor(value, colorVariables, isDark);
-		if (!colord(resolvedValue).isValid()) continue;
+		if (!isValidColor(resolvedValue)) continue;
 
 		const previous = { ...color, [isDark ? "darkValue" : "value"]: previousValue };
 		for (const type of ["shade", "tint"] as const) {

@@ -1,7 +1,7 @@
 import { MAX_COLOR_VARIATION_COUNT, MIN_COLOR_VARIATION_COUNT } from "../data/defaults";
 import { ColorItem, ColorVariable } from "../types";
+import { colorsEqual } from "utils";
 import { generateWithCheck } from "./generateShadesTints";
-import { colord } from "colord";
 
 export function updateColorVariations(
 	color: ColorItem,
@@ -55,11 +55,7 @@ export function updateColorVariation(
 	const item = items?.[index];
 	if (!item) return color;
 	// Opening and closing the picker can emit the same colour in another format.
-	const unchanged =
-		item.value === value ||
-		(colord(item.value).isValid() &&
-			colord(value).isValid() &&
-			colord(item.value).toHex() === colord(value).toHex());
+	const unchanged = item.value === value || colorsEqual(item.value, value);
 	if (!reset && unchanged) return color;
 	return {
 		...color,

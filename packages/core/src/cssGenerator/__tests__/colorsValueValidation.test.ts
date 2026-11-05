@@ -28,6 +28,11 @@ const backgroundColors = [
 	},
 	{
 		property: "background-color",
+		value: "oklch(62.8% 0.2577 29.23 / 0.5)",
+		result: true,
+	},
+	{
+		property: "background-color",
 		value: "transparent",
 		result: true,
 	},
@@ -71,6 +76,11 @@ const backgrounds = [
 	{
 		property: "background",
 		value: "hsla(0, 0%, 100%, 0.5)",
+		result: true,
+	},
+	{
+		property: "background",
+		value: "oklch(62.8% 0.2577 29.23)",
 		result: true,
 	},
 	{
@@ -128,6 +138,11 @@ const borderColors = [
 	{
 		property: "border-color",
 		value: "hsla(0, 0%, 100%, 0.5)",
+		result: true,
+	},
+	{
+		property: "border-color",
+		value: "oklch(62.8% 0.2577 29.23)",
 		result: true,
 	},
 	{

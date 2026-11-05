@@ -1,10 +1,8 @@
-import { expect, test } from "bun:test";
 import { getColorVariables } from "../src/colors/getColorVariables";
 import type { Preset } from "../src/types";
+import { expect, test } from "bun:test";
 
-const colorVariables = [
-	{ name: "brand-navy", colorValue: "#0a2545", colorDarkValue: "#ffffff" },
-];
+const colorVariables = [{ name: "brand-navy", colorValue: "#0a2545", colorDarkValue: "#ffffff" }];
 
 function variables(color: Record<string, unknown>) {
 	const preset = {
@@ -16,9 +14,7 @@ function variables(color: Record<string, unknown>) {
 }
 
 test("exports a RAW reference without a dark value, including transparent variants", () => {
-	expect(
-		variables({ value: "var(--brand-navy)", transparent: true, transparentVariables: [50] }),
-	).toEqual([
+	expect(variables({ value: "var(--brand-navy)", transparent: true, transparentVariables: [50] })).toEqual([
 		{
 			variable: "Colors/Brand/ink",
 			type: "COLOR",
@@ -55,4 +51,13 @@ test("does not export dark variables when dark mode is disabled", () => {
 	expect(
 		variables({ value: "var(--brand-navy)", darkValue: "var(--brand-navy)", isDarkMode: false }),
 	).toHaveLength(1);
+});
+
+test("converts OKLCH colors to Figma RGBA values", () => {
+	expect(variables({ value: "oklch(62.8% 0.2577 29.23 / 0.5)", format: "oklch" })[0].value).toEqual({
+		r: 1,
+		g: 0,
+		b: 0,
+		a: 0.5,
+	});
 });

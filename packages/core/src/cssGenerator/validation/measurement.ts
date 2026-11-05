@@ -1,6 +1,7 @@
 // import { CSS_TRANSFORM_FUNCTIONS } from "constants/cssFunctions";
 import { COLORS_EXTENDED } from "../data/colors";
 import { LENGTH_UNITS, TIME_UNITS } from "../data/units";
+import { isValidColor } from "utils";
 
 function _length(value: string) {
 	if (Number.isNaN(Number(value[0]))) {
@@ -55,6 +56,10 @@ function _color(color: string) {
 	}
 
 	if (color.match(/^hsla\(\s*\d{1,3},\s*\d{1,3}%,\s*\d{1,3}%,\s*(0|1|0\.\d+)\s*\)$/)) {
+		return true;
+	}
+
+	if (isValidColor(color)) {
 		return true;
 	}
 

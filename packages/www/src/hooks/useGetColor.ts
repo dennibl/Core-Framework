@@ -1,11 +1,11 @@
 import { useMemo, useRef } from "react";
-import { ColorVariable } from "../components/modules/colorSystem";
+import { ColorFormatValue, ColorVariable } from "../components/modules/colorSystem";
 import { colorGroupsToVariables } from "../components/modules/colorSystem/functions/colorGroupsToVariables";
 import cssColorNames from "../data/cssColorNames";
-import { getDefaultColorInFormat, isValidColor } from "../utils";
-import { ColorFormat } from "@mantine/core/lib/ColorPicker/types";
+import { convertToDesiredColorFormat, getDefaultColorInFormat, isValidColor } from "../utils";
 import type { Color } from "@adobe/react-spectrum";
 import { parseColor } from "@adobe/react-spectrum";
+import { ColorFormat } from "@mantine/core/lib/ColorPicker/types";
 import { colord } from "colord";
 import { useAtomValue } from "jotai";
 import { colorSystemFormDataAtom } from "../state";
@@ -72,20 +72,25 @@ export function useGetColor() {
 		return false;
 	}
 
-	function parseColorValue(value: string, format: ColorFormat, isDark: boolean = false) {
+	function parseColorValue(value: string, format: ColorFormatValue, isDark: boolean = false) {
+		const supportedFormat: ColorFormat = format === "oklch" || format === "raw" ? "hsl" : format;
 		try {
-			if (!value) return parseColor(getDefaultColorInFormat(format));
+			if (!value) return parseColor(getDefaultColorInFormat(supportedFormat));
 
 			const color = getColor(value, isDark);
-			const isConversionFromHslToHex = color?.startsWith("hsl") && hexFormats.includes(format);
+			const isConversionFromHslToHex = color?.startsWith("hsl") && hexFormats.includes(supportedFormat);
 			if (isConversionFromHslToHex) {
-				const colorDInstance = colord(color ?? getDefaultColorInFormat(format));
+				const colorDInstance = colord(color ?? getDefaultColorInFormat(supportedFormat));
 				return parseColor(colorDInstance.toHex());
 			}
 
-			return parseColor(color ?? getDefaultColorInFormat(format)).toFormat(format);
+			const supportedColor = convertToDesiredColorFormat(
+				color ?? getDefaultColorInFormat(supportedFormat),
+				supportedFormat,
+			);
+			return parseColor(supportedColor).toFormat(supportedFormat);
 		} catch {
-			return parseColor(getDefaultColorInFormat(format)).toFormat(format);
+			return parseColor(getDefaultColorInFormat(supportedFormat)).toFormat(supportedFormat);
 		}
 	}
 

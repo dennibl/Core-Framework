@@ -3,8 +3,9 @@ import { devLog } from "functions/devLog";
 import LZString from "lz-string";
 import { ulid } from "ulid";
 import { IS_DEV } from "constants/isDev";
+import { formatOklch, oklchToRgba, parseOklch, rgbaToOklch } from "./oklch";
 
-type ColorFormat = "hex" | "hexa" | "rgb" | "rgba" | "hsl" | "hsla";
+type ColorFormat = "hex" | "hexa" | "rgb" | "rgba" | "hsl" | "hsla" | "oklch";
 type ColorFormatValue = ColorFormat | "raw";
 
 export const tryCatch = <T extends unknown>(fn: () => T, fallback?: T): T => {
@@ -251,10 +252,14 @@ export function fuzzySearch(needle: string, haystack: string) {
 
 export function convertToDesiredColorFormat(instance: Colord | string, format?: string) {
 	if (typeof instance === "string") {
-		const color = colord(instance);
+		const parsedOklch = parseOklch(instance);
+		if (format === "oklch" && parsedOklch) return formatOklch(parsedOklch);
+
+		const color = parsedOklch ? colord(oklchToRgba(parsedOklch)) : colord(instance);
 		if (!color.isValid()) return "#000000";
 		instance = color;
 	}
+	if (typeof instance.alpha !== "function") return "#000000";
 
 	const alpha = Math.round(instance.alpha() * 100) / 100;
 	switch (format) {
@@ -277,32 +282,57 @@ export function convertToDesiredColorFormat(instance: Colord | string, format?: 
 		case "hsla":
 			const { h, s, l } = instance.toHsl();
 			return `hsla(${h}, ${s}%, ${l}%, ${alpha})`;
+		case "oklch":
+			return formatOklch(rgbaToOklch(instance.toRgb()));
 		default:
 			return instance.toHex();
 	}
+}
+
+export function parseColorToColord(value: string): Colord {
+	const parsedOklch = parseOklch(value);
+	return parsedOklch ? colord(oklchToRgba(parsedOklch)) : colord(value);
+}
+
+export function setColorAlpha(value: string, alpha: number, format?: string): string {
+	const parsedOklch = parseOklch(value);
+	if (format === "oklch" && parsedOklch) {
+		return formatOklch({ ...parsedOklch, a: Math.min(1, Math.max(0, alpha)) });
+	}
+	return convertToDesiredColorFormat(parseColorToColord(value).alpha(alpha), format);
+}
+
+export function colorsEqual(first: string, second: string): boolean {
+	const firstColor = parseColorToColord(first);
+	const secondColor = parseColorToColord(second);
+	return firstColor.isValid() && secondColor.isValid() && firstColor.toHex() === secondColor.toHex();
 }
 
 export const getDefaultColorInFormat = (
 	format: ColorFormatValue,
 	color: string = "hsl(0, 0%, 0%)",
 ): string => {
-	const c = colord(color);
+	const parsedColor = parseColorToColord(color);
 	switch (format) {
 		case "hex":
 		case "hexa":
-			return c.toHex();
+			return parsedColor.toHex();
 		case "rgb":
 		case "rgba":
-			return c.toRgbString();
+			return parsedColor.toRgbString();
 		case "hsl":
 		case "hsla":
-			return c.toHslString();
+			return parsedColor.toHslString();
+		case "oklch":
+			return convertToDesiredColorFormat(parsedColor, "oklch");
 		default:
-			return c.toHex();
+			return parsedColor.toHex();
 	}
 };
 
-export const isValidColor = (value: string) => colord(value).isValid();
+export const isValidColor = (value: string) => parseOklch(value) !== null || colord(value).isValid();
+
+export { formatOklch, parseOklch } from "./oklch";
 
 export function lzwEncode(s: string) {
 	try {

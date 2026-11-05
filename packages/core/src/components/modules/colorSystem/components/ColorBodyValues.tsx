@@ -1,10 +1,9 @@
 import { memo, useCallback, useEffect, useRef, useState } from "react";
-import { useGetColor } from "hooks/useGetColor";
-import { convertToDesiredColorFormat } from "utils";
-import { updateColorVariation, updateColorVariations } from "../functions/updateColorVariations";
 import { generateWithCheck } from "../functions/generateShadesTints";
+import { updateColorVariation, updateColorVariations } from "../functions/updateColorVariations";
 import { ClassGeneratorValue, ColorItem } from "../index";
-import { colord } from "colord";
+import { convertToDesiredColorFormat, parseColorToColord } from "utils";
+import { useGetColor } from "hooks/useGetColor";
 import { ColorAdditionalVariations, VariantValues } from "./ColorAdditionalVariations";
 import { ColorFeatureToggle } from "./ColorFeatureToggle";
 import { ColorTransparencyVariations } from "./ColorTransparencyVariations";
@@ -39,7 +38,7 @@ export const ColorBodyValues = memo<ColorBodyValues>(({ color, onUpdateItem }) =
 		(checked: boolean) => {
 			const { isShades, isTints, darkShades, darkTints } = color;
 			const darkValue = checked
-				? convertToDesiredColorFormat(colord(getColor(color.value)).darken(0.2), color.format)
+				? convertToDesiredColorFormat(parseColorToColord(getColor(color.value)).darken(0.2), color.format)
 				: "";
 
 			onUpdateItem({
@@ -61,7 +60,9 @@ export const ColorBodyValues = memo<ColorBodyValues>(({ color, onUpdateItem }) =
 
 	const handleColorVariationChange = useCallback(
 		(type: "shade" | "tint", value: VariantValues) => {
-			onUpdateItem(updateColorVariations(color, type, value.isActive, value.number, colorVariables, prevFormat));
+			onUpdateItem(
+				updateColorVariations(color, type, value.isActive, value.number, colorVariables, prevFormat),
+			);
 		},
 		[color, onUpdateItem, prevFormat, colorVariables],
 	);
@@ -94,7 +95,9 @@ export const ColorBodyValues = memo<ColorBodyValues>(({ color, onUpdateItem }) =
 				color={color}
 				variant="shade"
 				onChange={(value) => handleColorVariationChange("shade", value)}
-				onUpdateColor={(value, index, isDark, reset) => handleColorChange(value, index, isDark, "shade", reset)}
+				onUpdateColor={(value, index, isDark, reset) =>
+					handleColorChange(value, index, isDark, "shade", reset)
+				}
 			/>
 
 			<hr />
@@ -102,7 +105,9 @@ export const ColorBodyValues = memo<ColorBodyValues>(({ color, onUpdateItem }) =
 				color={color}
 				variant="tint"
 				onChange={(value) => handleColorVariationChange("tint", value)}
-				onUpdateColor={(value, index, isDark, reset) => handleColorChange(value, index, isDark, "tint", reset)}
+				onUpdateColor={(value, index, isDark, reset) =>
+					handleColorChange(value, index, isDark, "tint", reset)
+				}
 			/>
 		</div>
 	);

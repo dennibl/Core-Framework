@@ -59,3 +59,16 @@ test("Parse CSS | should parse CSS into CSS Objects", () => {
 
 	expect(parsedCSS).toEqual(result);
 });
+
+test("Parse CSS | recognizes OKLCH custom properties as colors", () => {
+	const parsedCSS = parseCSS(":root { --brand: oklch(62.8% 0.2577 29.23); }") as any;
+
+	expect(parsedCSS.modulesData.COLOR_SYSTEM.colors).toEqual([
+		{
+			format: "oklch",
+			id: expect.any(String),
+			name: "--brand",
+			value: "oklch(62.8% 0.2577 29.23)",
+		},
+	]);
+});

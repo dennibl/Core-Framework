@@ -1,11 +1,12 @@
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
+import { shouldApplyColorValueChange } from "../functions/shouldApplyColorValueChange";
+import { ColorFormatValue } from "../index";
+import { Tooltip } from "@mantine/core";
+import { convertToDesiredColorFormat } from "utils";
 import { Info } from "assets/icons/Info.icon";
+import { Autocomplete } from "components/basic/Autocomplete";
 import { useDebounce } from "hooks/useDebounce";
 import { useGetColor } from "hooks/useGetColor";
-import { Autocomplete } from "components/basic/Autocomplete";
-import { ColorFormatValue } from "../index";
-import { shouldApplyColorValueChange } from "../functions/shouldApplyColorValueChange";
-import { Tooltip } from "@mantine/core";
 
 interface ColorValue {
 	value: string;
@@ -22,10 +23,23 @@ export const ColorValue = memo<ColorValue>(({ value, format, variableName, onCha
 	const [colorValue, setColorValue] = useState(() => value);
 	const [isFocused, setIsFocused] = useState(false);
 
-	const validFormat = useMemo(() => (format === "raw" ? "hex" : format), [format]);
+	const validFormat = useMemo(
+		() => (format === "raw" ? "hex" : format === "oklch" ? "hsl" : format),
+		[format],
+	);
 	const isRawFormat = format === "raw";
-	const dynamicParsedColor = useMemo(() => parseColorValue(value, validFormat, isDark), [value, validFormat, isDark, parseColorValue]);
+	const dynamicParsedColor = useMemo(
+		() => parseColorValue(value, validFormat, isDark),
+		[value, validFormat, isDark, parseColorValue],
+	);
 	const parsedColor = useDebounce(dynamicParsedColor, 300);
+	const formattedParsedColor = useMemo(
+		() =>
+			format === "oklch"
+				? convertToDesiredColorFormat(parsedColor.toString("hsla"), "oklch")
+				: parsedColor.toString(validFormat),
+		[format, parsedColor, validFormat],
+	);
 
 	const filteredSuggestions = useMemo(() => {
 		if (!isRawFormat) return [];
@@ -46,9 +60,12 @@ export const ColorValue = memo<ColorValue>(({ value, format, variableName, onCha
 
 	const handleValueChange = useCallback(
 		(color: string) => {
+			const resolvedColor = getColor(color, isDark);
 			const isSameColor =
-				getColor(color, isDark) ===
-				parseColorValue(parsedColor.toString(validFormat), validFormat, isDark).toString(validFormat);
+				(format === "oklch"
+					? convertToDesiredColorFormat(resolvedColor, "oklch")
+					: parseColorValue(resolvedColor, validFormat, isDark).toString(validFormat)) ===
+				formattedParsedColor;
 
 			const isValidColor = isValidColorValue(color, isDark);
 
@@ -65,12 +82,23 @@ export const ColorValue = memo<ColorValue>(({ value, format, variableName, onCha
 			}
 			setColorValue(color);
 		},
-		[isValidColorValue, onChange, getColor, isDark, isRawFormat, parseColorValue, parsedColor.toString, validFormat, value],
+		[
+			isValidColorValue,
+			onChange,
+			getColor,
+			isDark,
+			isRawFormat,
+			parseColorValue,
+			validFormat,
+			value,
+			format,
+			formattedParsedColor,
+		],
 	);
 
 	useEffect(() => {
-		isFocused || setColorValue(isRawFormat ? value : parsedColor.toString(validFormat));
-	}, [parsedColor, isFocused, isRawFormat, validFormat, value]);
+		isFocused || setColorValue(isRawFormat ? value : formattedParsedColor);
+	}, [formattedParsedColor, isFocused, isRawFormat, value]);
 
 	return (
 		<Tooltip label={isDark ? "Color value in dark mode" : "Color value"} withArrow>

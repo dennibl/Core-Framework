@@ -1,14 +1,14 @@
 import { memo, useEffect, useMemo, useState } from "react";
-import { flags } from "flags";
-import { useGetColor } from "hooks/useGetColor";
-import { copyToClipboard } from "utils";
-import { Popover, PopoverContent, PopoverTrigger } from "components/CustomPopover";
-import { Tooltip } from "components/ui/Tooltip";
 import { COLOR_CHANNELS_CONFIG, HSL_FORMATS } from "../constants/formats";
 import { ColorFormatValue } from "../index";
 import { ColorArea, ColorSlider, ColorWheel, Provider, defaultTheme } from "@adobe/react-spectrum";
-import { Input } from "@mantine/core";
 import type { Color } from "@adobe/react-spectrum";
+import { Input } from "@mantine/core";
+import { flags } from "flags";
+import { convertToDesiredColorFormat, copyToClipboard } from "utils";
+import { Popover, PopoverContent, PopoverTrigger } from "components/CustomPopover";
+import { Tooltip } from "components/ui/Tooltip";
+import { useGetColor } from "hooks/useGetColor";
 
 interface ColorVariationPreview {
 	color: string;
@@ -30,7 +30,10 @@ export const ColorVariationPreview = memo<ColorVariationPreview>(
 		const [isVariableCopied, setIsVariableCopied] = useState(false);
 		const [isColorCopied, setIsColorCopied] = useState(false);
 
-		const validFormat = useMemo(() => (format === "raw" ? "hex" : format), [format]);
+		const validFormat = useMemo(
+			() => (format === "raw" ? "hex" : format === "oklch" ? "hsl" : format),
+			[format],
+		);
 		const parsedColor = useMemo(
 			() => parseColorValue(isEditPopoverOpen ? colorValue : color, validFormat),
 			[isEditPopoverOpen, color, colorValue, validFormat, parseColorValue],
@@ -39,10 +42,15 @@ export const ColorVariationPreview = memo<ColorVariationPreview>(
 		const [, saturationChannel, lightnessChannel] = colorChannels(parsedColor, validFormat);
 		const currentChannels = COLOR_CHANNELS_CONFIG[validFormat] || [];
 
-		const handleChange = (value: string | Color) => setColorValue(value.toString(validFormat));
-		const handleChangeEnd = (value: Color) => onChangeEnd(value.toString(validFormat));
+		const formatOutput = (value: Color) =>
+			format === "oklch"
+				? convertToDesiredColorFormat(value.toString("hsla"), "oklch")
+				: value.toString(validFormat);
+		const handleChange = (value: string | Color) =>
+			setColorValue(typeof value === "string" ? value : formatOutput(value));
+		const handleChangeEnd = (value: Color) => onChangeEnd(formatOutput(value));
 		const handleBlur = () => {
-			const value = parsedColor.toString(validFormat);
+			const value = formatOutput(parsedColor);
 			setColorValue(value);
 			onChangeEnd(value);
 		};
@@ -52,7 +60,7 @@ export const ColorVariationPreview = memo<ColorVariationPreview>(
 		};
 
 		const copyVariable = async (type: "var" | "color") => {
-			await copyToClipboard(type === "var" ? `var(--${colorName})` : parsedColor.toString(validFormat));
+			await copyToClipboard(type === "var" ? `var(--${colorName})` : formatOutput(parsedColor));
 
 			const setCopied = type === "var" ? setIsVariableCopied : setIsColorCopied;
 			setCopied(true);
@@ -165,7 +173,7 @@ export const ColorVariationPreview = memo<ColorVariationPreview>(
 					</Tooltip>
 
 					<Tooltip
-						label={isColorCopied ? "Color copied!" : parsedColor.toString(validFormat)}
+						label={isColorCopied ? "Color copied!" : formatOutput(parsedColor)}
 						style={{ backgroundColor: isColorCopied ? "green" : "" }}
 						position="bottom"
 						withArrow

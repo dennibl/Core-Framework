@@ -11,6 +11,7 @@ type Formats =
 	| "xyz"
 	| "lab"
 	| "lch"
+	| "oklch"
 	| "cmyk"
 	| "hexa"
 	| "rgba"
@@ -139,7 +140,7 @@ export type Shade = {
 	isCustom?: boolean;
 };
 
-export type ColorFormatValue = ColorFormat | "raw";
+export type ColorFormatValue = ColorFormat | "oklch" | "raw";
 
 export type ColorVariable = {
 	name: string;

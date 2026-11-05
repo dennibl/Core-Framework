@@ -1,29 +1,29 @@
 import { memo, useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
-import { Down } from "assets/icons/Down.icon";
-import { Duplicate } from "assets/icons/Duplicate.icon";
-import { ImportExport } from "assets/icons/ImportExport.icon";
-import { Remove } from "assets/icons/Remove.icon";
-import { ThreeDots } from "assets/icons/ThreeDots.icon";
-import { Up } from "assets/icons/Up.icon";
-import { PartialExportTypes, createPartialExport } from "functions/partialImportExport";
-import { useDebounce } from "hooks/useDebounce";
-import { useDidMountEffect } from "hooks/useDidMountEffect";
-import { useGetColor } from "hooks/useGetColor";
-import { copyToClipboard } from "utils";
-import { Tooltip } from "components/ui/Tooltip";
 import { singleColorReducer } from "../functions/singleColorReducer";
 import { ColorFormatValue, ColorItem } from "../index";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Collapse, Menu, Select } from "@mantine/core";
 import { clsx } from "clsx";
+import { PartialExportTypes, createPartialExport } from "functions/partialImportExport";
 import { toast } from "sonner";
+import { copyToClipboard } from "utils";
+import { Down } from "assets/icons/Down.icon";
+import { Duplicate } from "assets/icons/Duplicate.icon";
+import { ImportExport } from "assets/icons/ImportExport.icon";
+import { Remove } from "assets/icons/Remove.icon";
+import { ThreeDots } from "assets/icons/ThreeDots.icon";
+import { Up } from "assets/icons/Up.icon";
+import { Tooltip } from "components/ui/Tooltip";
+import { useDebounce } from "hooks/useDebounce";
+import { useDidMountEffect } from "hooks/useDidMountEffect";
+import { useGetColor } from "hooks/useGetColor";
 import { ColorBodyValues } from "./ColorBodyValues";
 import { ColorPickerPreview } from "./ColorPickerPreview";
 import { ColorValue } from "./ColorValue";
 import { ColorVariableName } from "./ColorVariableName";
 
-const SELECTABLE_FORMATS: ColorFormatValue[] = ["hex", "hexa", "rgb", "rgba", "hsl", "hsla", "raw"];
+const SELECTABLE_FORMATS: ColorFormatValue[] = ["oklch", "hex", "hexa", "rgb", "rgba", "hsl", "hsla", "raw"];
 
 interface ColorSingleRow {
 	color: ColorItem;
@@ -130,7 +130,16 @@ export const ColorSingleRow = memo<ColorSingleRow>(
 					style: isDeleteConfirmationOpen ? { background: "#c2344e" } : {},
 				},
 			],
-			[color.id, groupId, isDeleteConfirmationOpen, onDelete, onDuplicate, onMove, handleComponentExport, onImport],
+			[
+				color.id,
+				groupId,
+				isDeleteConfirmationOpen,
+				onDelete,
+				onDuplicate,
+				onMove,
+				handleComponentExport,
+				onImport,
+			],
 		);
 
 		const style = {

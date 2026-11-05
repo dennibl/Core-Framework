@@ -1,9 +1,8 @@
-import { refreshColorReferences } from "./refreshColorReferences";
 import { ColorItem, Shade, SingleColorReducerAction } from "../types";
-import { colord } from "colord";
 import { convertToDesiredColorFormat } from "utils";
 import { generateAdditionalColorName, generateWithCheck } from "./generateShadesTints";
 import { getColor } from "./getColor";
+import { refreshColorReferences } from "./refreshColorReferences";
 
 export const singleColorReducer = (state: ColorItem, action: SingleColorReducerAction): ColorItem => {
 	switch (action.type) {
@@ -45,14 +44,14 @@ export const singleColorReducer = (state: ColorItem, action: SingleColorReducerA
 			const { format, colorVariables } = action.payload;
 			const { value, darkValue, isDarkMode, isShades, isTints, shades, tints, darkShades, darkTints } = state;
 
-			const colorInstance = colord(getColor(value, colorVariables));
-			const colorInDesiredFormat = convertToDesiredColorFormat(colorInstance, format);
+			const resolvedColor = getColor(value, colorVariables);
+			const colorInDesiredFormat = convertToDesiredColorFormat(resolvedColor, format);
 
-			const colorDarkInstance =
-				isDarkMode && darkValue ? colord(getColor(darkValue, colorVariables, true)) : colorInstance;
+			const resolvedDarkColor =
+				isDarkMode && darkValue ? getColor(darkValue, colorVariables, true) : resolvedColor;
 			const colorDarkInDesiredFormat =
 				isDarkMode && darkValue
-					? convertToDesiredColorFormat(colorDarkInstance, format)
+					? convertToDesiredColorFormat(resolvedDarkColor, format)
 					: colorInDesiredFormat;
 
 			const formatItem = (item: Shade) => ({
