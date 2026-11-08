@@ -1,9 +1,13 @@
 import { COLOR_SYSTEM_INITIAL_STATE, DEFAULT_COLOR_ITEM } from "../../data/defaults";
 import { colorItemSchema } from "../../schema/colorSystem.schema";
+import { generateDarkModeColor } from "../generateDarkModeColor";
 import { getTransparentVariable } from "../generateColorSystemVariables";
-import { generateShades, generateTints } from "../generateShadesTints";
+import { generateShades, generateTints, generateWithCheck } from "../generateShadesTints";
+import { singleColorReducer } from "../singleColorReducer";
+import { updateColorVariation } from "../updateColorVariations";
 import {
 	convertToDesiredColorFormat,
+	isOklchInSrgbGamut,
 	isValidColor,
 	parseColorToColord,
 	parseOklch,
@@ -30,6 +34,78 @@ describe("OKLCH color support", () => {
 
 	test("preserves OKLCH channels when changing alpha", () => {
 		expect(setColorAlpha("oklch(60% 0.2 120)", 0.18, "oklch")).toBe("oklch(60% 0.2 120 / 0.18)");
+	});
+
+	test("generates dark mode colors by reflecting OKLCH lightness", () => {
+		expect(generateDarkModeColor("oklch(23.61% 0.0876 289.18)", "oklch")).toBe(
+			"oklch(76.39% 0.0876 289.18)",
+		);
+		expect(generateDarkModeColor("oklch(81.83% 0.2166 138.99)", "oklch")).toBe(
+			"oklch(18.17% 0.0572 138.99)",
+		);
+
+		const mappedGreen = parseOklch(generateDarkModeColor("oklch(81.83% 0.2166 138.99)", "oklch")!);
+		expect(mappedGreen && isOklchInSrgbGamut(mappedGreen)).toBe(true);
+	});
+
+	test.each(["hex", "hexa", "rgb", "rgba", "hsl", "hsla", "oklch"] as const)(
+		"turns a dark %s color into a light contrast color",
+		(format) => {
+			const source = convertToDesiredColorFormat("oklch(23.61% 0.0876 289.18)", format);
+			const result = generateDarkModeColor(source, format);
+			const resultOklch = result && parseOklch(convertToDesiredColorFormat(result, "oklch"));
+
+			expect(resultOklch?.l).toBeGreaterThan(0.5);
+		},
+	);
+
+	test.each([
+		["hex", "#70e34a", /^#[\da-f]{6}$/i],
+		["hexa", "#70e34aff", /^#[\da-f]{8}$/i],
+		["rgb", "rgb(112, 227, 74)", /^rgb\(/],
+		["rgba", "rgba(112, 227, 74, 0.4)", /^rgba\(/],
+		["hsl", "hsl(105, 73%, 59%)", /^hsl\(/],
+		["hsla", "hsla(105, 73%, 59%, 0.4)", /^hsla\(/],
+		["oklch", "oklch(81.83% 0.2166 138.99)", /^oklch\(/],
+	] as const)("returns a valid dark mode color in %s", (format, value, expectedSyntax) => {
+		const result = generateDarkModeColor(value, format);
+		expect(result).toMatch(expectedSyntax);
+		expect(result && isValidColor(result)).toBe(true);
+		expect(result && parseColorToColord(result).toHex()).not.toBe("#000000");
+	});
+
+	test("preserves alpha and rejects unresolved raw values", () => {
+		expect(generateDarkModeColor("rgba(112, 227, 74, 0.4)", "rgba")).toMatch(/, 0\.4\)$/);
+		expect(generateDarkModeColor("oklch(81.83% 0.2166 138.99 / 0.4)", "oklch")).toMatch(/\/ 0\.4\)$/);
+		expect(generateDarkModeColor("var(--missing)", "raw")).toBeNull();
+	});
+
+	test("updates the automatic dark color when the main color changes", () => {
+		const color = {
+			id: "brand",
+			name: "brand",
+			value: "oklch(23.61% 0.0876 289.18)",
+			format: "oklch" as const,
+			isDarkMode: true,
+			darkValue: "oklch(76.39% 0.0876 289.18)",
+			isShades: true,
+			shadesNumber: 2,
+		};
+		const withDarkShades = {
+			...color,
+			darkShades: generateWithCheck(color, color.darkValue, "shade", true),
+		};
+		const withCustomShade = updateColorVariation(withDarkShades, "shade", 0, "#123456", true);
+		const previousAutomaticShade = withCustomShade.darkShades![1].value;
+
+		const updated = singleColorReducer(withCustomShade, {
+			type: "updateColor",
+			payload: { value: "oklch(81.83% 0.2166 138.99)", colorVariables: [] },
+		});
+
+		expect(updated.darkValue).toBe("oklch(18.17% 0.0572 138.99)");
+		expect(updated.darkShades![0].value).toBe("#123456");
+		expect(updated.darkShades![1].value).not.toBe(previousAutomaticShade);
 	});
 
 	test("generates shades, tints, and opacity variants in OKLCH", () => {

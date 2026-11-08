@@ -67,6 +67,7 @@
 		"e2e:wp": "bun run release:wp && bash scripts/test-wp-e2e.sh",
 		"prepare": "husky",
 		"dev:www": "bun run --filter './packages/www' dev",
+		"start:www": "bun run --cwd packages/www start",
 		"build:www": "bun run --filter './packages/www' build",
 		"test:www": "bun run --filter './packages/www' test",
 		"dev:wp": "bun run build:builders && bun run --filter './packages/wp' dev",

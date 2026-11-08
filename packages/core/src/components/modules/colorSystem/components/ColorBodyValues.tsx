@@ -1,8 +1,8 @@
 import { memo, useCallback, useEffect, useRef, useState } from "react";
+import { generateDarkModeColor } from "../functions/generateDarkModeColor";
 import { generateWithCheck } from "../functions/generateShadesTints";
 import { updateColorVariation, updateColorVariations } from "../functions/updateColorVariations";
 import { ClassGeneratorValue, ColorItem } from "../index";
-import { convertToDesiredColorFormat, parseColorToColord } from "utils";
 import { useGetColor } from "hooks/useGetColor";
 import { ColorAdditionalVariations, VariantValues } from "./ColorAdditionalVariations";
 import { ColorFeatureToggle } from "./ColorFeatureToggle";
@@ -38,7 +38,7 @@ export const ColorBodyValues = memo<ColorBodyValues>(({ color, onUpdateItem }) =
 		(checked: boolean) => {
 			const { isShades, isTints, darkShades, darkTints } = color;
 			const darkValue = checked
-				? convertToDesiredColorFormat(parseColorToColord(getColor(color.value)).darken(0.2), color.format)
+				? (generateDarkModeColor(getColor(color.value), color.format) ?? color.value)
 				: "";
 
 			onUpdateItem({

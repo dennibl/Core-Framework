@@ -332,7 +332,14 @@ export const getDefaultColorInFormat = (
 
 export const isValidColor = (value: string) => parseOklch(value) !== null || colord(value).isValid();
 
-export { formatOklch, parseOklch } from "./oklch";
+export {
+	fitOklchToSrgb,
+	formatOklch,
+	isOklchInSrgbGamut,
+	oklchToRgba,
+	parseOklch,
+	rgbaToOklch,
+} from "./oklch";
 
 export function lzwEncode(s: string) {
 	try {

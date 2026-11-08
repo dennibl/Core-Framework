@@ -1,5 +1,6 @@
 import { ColorItem, Shade, SingleColorReducerAction } from "../types";
 import { convertToDesiredColorFormat } from "utils";
+import { generateDarkModeColor } from "./generateDarkModeColor";
 import { generateAdditionalColorName, generateWithCheck } from "./generateShadesTints";
 import { getColor } from "./getColor";
 import { refreshColorReferences } from "./refreshColorReferences";
@@ -30,6 +31,9 @@ export const singleColorReducer = (state: ColorItem, action: SingleColorReducerA
 		}
 		case "updateColor": {
 			const { value, colorVariables } = action.payload;
+			const generatedDarkValue = state.isDarkMode
+				? generateDarkModeColor(getColor(value, colorVariables), state.format)
+				: null;
 
 			return {
 				...state,
@@ -38,6 +42,33 @@ export const singleColorReducer = (state: ColorItem, action: SingleColorReducerA
 					? { shades: generateWithCheck(state, value, "shade", false, colorVariables) }
 					: {}),
 				...(state.isTints ? { tints: generateWithCheck(state, value, "tint", false, colorVariables) } : {}),
+				...(generatedDarkValue
+					? {
+							darkValue: generatedDarkValue,
+							...(state.isShades
+								? {
+										darkShades: generateWithCheck(
+											state,
+											generatedDarkValue,
+											"shade",
+											true,
+											colorVariables,
+										),
+								  }
+								: {}),
+							...(state.isTints
+								? {
+										darkTints: generateWithCheck(
+											state,
+											generatedDarkValue,
+											"tint",
+											true,
+											colorVariables,
+										),
+								  }
+								: {}),
+						}
+					: {}),
 			};
 		}
 		case "updateFormat": {

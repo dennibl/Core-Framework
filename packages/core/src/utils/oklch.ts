@@ -12,6 +12,12 @@ interface RgbaColor {
 	a: number;
 }
 
+interface SrgbColor {
+	r: number;
+	g: number;
+	b: number;
+}
+
 const NUMBER_PATTERN = "[+-]?(?:\\d*\\.)?\\d+(?:e[+-]?\\d+)?";
 const OKLCH_PATTERN = new RegExp(
 	`^oklch\\(\\s*(${NUMBER_PATTERN})(%)?\\s+(${NUMBER_PATTERN})(%)?\\s+(${NUMBER_PATTERN})(deg|grad|rad|turn)?(?:\\s*\\/\\s*(${NUMBER_PATTERN})(%)?)?\\s*\\)$`,
@@ -71,7 +77,7 @@ const linearToSrgb = (value: number) =>
 
 const srgbToLinear = (value: number) => (value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4);
 
-export function oklchToRgba({ l, c, h, a }: OklchColor): RgbaColor {
+function oklchToSrgb({ l, c, h }: OklchColor): SrgbColor {
 	const radians = (normalizeHue(h) * Math.PI) / 180;
 	const labA = c * Math.cos(radians);
 	const labB = c * Math.sin(radians);
@@ -87,11 +93,48 @@ export function oklchToRgba({ l, c, h, a }: OklchColor): RgbaColor {
 	const green = linearToSrgb(-1.2684380046 * linearL + 2.6097574011 * linearM - 0.3413193965 * linearS);
 	const blue = linearToSrgb(-0.0041960863 * linearL - 0.7034186147 * linearM + 1.707614701 * linearS);
 
+	return { r: red, g: green, b: blue };
+}
+
+export function isOklchInSrgbGamut(color: OklchColor): boolean {
+	const { r, g, b } = oklchToSrgb(color);
+	const epsilon = 1e-7;
+	return [r, g, b].every((channel) => channel >= -epsilon && channel <= 1 + epsilon);
+}
+
+export function fitOklchToSrgb(color: OklchColor): OklchColor {
+	const normalizedColor = {
+		l: clamp(color.l),
+		c: Math.max(0, color.c),
+		h: normalizeHue(color.h),
+		a: clamp(color.a),
+	};
+	if (isOklchInSrgbGamut(normalizedColor)) return normalizedColor;
+
+	let minimumChroma = 0;
+	let maximumChroma = normalizedColor.c;
+	for (let iteration = 0; iteration < 24; iteration++) {
+		const chroma = (minimumChroma + maximumChroma) / 2;
+		if (isOklchInSrgbGamut({ ...normalizedColor, c: chroma })) {
+			minimumChroma = chroma;
+		} else {
+			maximumChroma = chroma;
+		}
+	}
+
+	// Keep the four-decimal CSS representation inside sRGB as well. Rounding an
+	// exact boundary value up could otherwise move the serialized color back out.
+	const serializableChroma = Math.floor((minimumChroma + Number.EPSILON) * 10000) / 10000;
+	return { ...normalizedColor, c: serializableChroma };
+}
+
+export function oklchToRgba(color: OklchColor): RgbaColor {
+	const { r, g, b } = oklchToSrgb(color);
 	return {
-		r: Math.round(clamp(red) * 255),
-		g: Math.round(clamp(green) * 255),
-		b: Math.round(clamp(blue) * 255),
-		a: clamp(a),
+		r: Math.round(clamp(r) * 255),
+		g: Math.round(clamp(g) * 255),
+		b: Math.round(clamp(b) * 255),
+		a: clamp(color.a),
 	};
 }
 
